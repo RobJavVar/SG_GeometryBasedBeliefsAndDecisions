@@ -10,11 +10,16 @@ participantID <- read.csv("C:/Users/rober/Dropbox/Professional/GitHub/SG_Geometr
 bd_alignmnet_combination <- read.csv("C:/Users/rober/Dropbox/Professional/GitHub/SG_GeometryBasedBeliefsAndDecisions/output/bdalignment_combination.csv")
 
 #Remove indexing columns from data frames
-graph_alignment$X <- NULL; participantID$X <- NULL; bd_alignmnet_combination$X <- NULL
+#graph_alignment$X <- NULL; participantID$X <- NULL; bd_alignmnet_combination$X <- NULL
 
-#Define function inputs
-Y <- bd_alignmnet_combination; X <- graph_alignment; Z <- participantID %>% mutate(across(everything(), as.factor))
-df <- bind_cols(Y, X, Z)
+# Data prep
+df <- bind_cols(bd_alignmnet_combination, graph_alignment, participantID) %>%
+  select(-X) %>%
+  mutate(across(c(participant_A, participant_B), as.factor))
 
-#Clean column names
-#colnames(df) <- sapply(colnames(df), clean_column_name)
+outcome_var <- "BelBehAgreement"
+random_effects <- c("participant_A", "participant_B")
+predictor_vars <- setdiff(names(df), c(outcome_var, random_effects))
+
+# Run function
+run_cv_multimem_lmer(df, outcome_var, random_effects, predictor_vars, k = 10)
